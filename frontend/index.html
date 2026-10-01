@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#183d36">
+    <title>Westbridge Student Mail</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Westbridge Student Mail home">
+        <span class="brand-mark" aria-hidden="true">W</span>
+        <span class="brand-copy">
+          <span class="brand-name">Westbridge</span>
+          <span class="brand-product">Student Mail</span>
+        </span>
+      </a>
+      <div class="topbar-right">
+        <span class="term-label">AUTUMN TERM · 2026</span>
+        <span class="student-chip"><span class="student-avatar">KP</span> Kim Park</span>
+      </div>
+    </header>
+
+    <main class="mail-shell">
+      <aside class="folder-rail" aria-label="Mail folders">
+        <button class="compose-button" id="compose-button" type="button">
+          <span class="compose-plus" aria-hidden="true">+</span>
+          <span>Compose</span>
+        </button>
+        <div class="rail-caption">MAILBOX</div>
+        <nav class="folder-nav">
+          <button class="folder-link is-active" data-folder="inbox" type="button">
+            <span class="folder-symbol inbox-symbol" aria-hidden="true"></span>
+            <span>Inbox</span>
+            <span class="folder-count" id="inbox-count">0</span>
+          </button>
+          <button class="folder-link" data-folder="sent" type="button">
+            <span class="folder-symbol sent-symbol" aria-hidden="true"></span>
+            <span>Sent</span>
+          </button>
+        </nav>
+        <div class="rail-bottom">
+          <span class="local-indicator" aria-hidden="true"></span>
+          <span>Westbridge local mail</span>
+        </div>
+      </aside>
+
+      <section class="message-column" aria-label="Message list">
+        <div class="list-heading">
+          <div>
+            <p class="eyebrow" id="list-eyebrow">YOUR MAILBOX</p>
+            <h1 id="folder-title">Inbox</h1>
+          </div>
+          <button class="icon-button" id="refresh-button" type="button" title="Refresh mailbox" aria-label="Refresh mailbox">
+            <span class="refresh-icon" aria-hidden="true">↻</span>
+          </button>
+        </div>
+        <div class="list-meta"><span id="message-total">Loading messages</span><span class="list-meta-line"></span></div>
+        <div class="email-list" id="email-list" aria-live="polite"></div>
+        <div class="empty-list" id="empty-list" hidden>
+          <span class="empty-glyph" aria-hidden="true">—</span>
+          <strong>No messages here</strong>
+          <span>This folder is waiting for mail.</span>
+        </div>
+        <div class="list-error" id="list-error" hidden></div>
+      </section>
+
+      <section class="reading-column" id="reading-column" aria-label="Email reading view">
+        <div class="reader-empty" id="reader-empty">
+          <div class="reader-stamp" aria-hidden="true">W</div>
+          <p class="eyebrow">WESTBRIDGE UNIVERSITY</p>
+          <h2>Your correspondence,<br>in one place.</h2>
+          <p>Select a message to read it, or compose a note to Student Services.</p>
+          <button class="text-action" id="empty-compose" type="button">Write a message <span aria-hidden="true">↗</span></button>
+        </div>
+        <article class="email-reader" id="email-reader" hidden></article>
+        <form class="compose-view" id="compose-view" hidden>
+          <div class="compose-heading">
+            <div>
+              <p class="eyebrow">NEW MESSAGE</p>
+              <h2>Write to the university</h2>
+            </div>
+            <button class="icon-button close-compose" id="close-compose" type="button" aria-label="Close compose view" title="Close">×</button>
+          </div>
+          <label class="form-row recipient-row">
+            <span>To</span>
+            <input id="recipient" type="email" value="fake_uni@westbridge.edu" readonly aria-readonly="true">
+            <span class="fictional-tag">FICTIONAL</span>
+          </label>
+          <label class="form-row subject-row">
+            <span>Subject</span>
+            <input id="subject" name="subject" maxlength="998" required placeholder="What can we help with?">
+          </label>
+          <label class="body-label" for="body">Message</label>
+          <textarea id="body" name="body" maxlength="50000" required placeholder="Write your message to Student Services…"></textarea>
+          <div class="compose-footer">
+            <span class="compose-note">Replies stay in this fictional mailbox.</span>
+            <button class="send-button" id="send-button" type="submit">
+              <span class="send-symbol" aria-hidden="true">↗</span>
+              <span>Send email</span>
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <aside class="agent-status" id="agent-status" role="status" aria-live="polite" hidden>
+      <span class="status-orbit" id="status-orbit" aria-hidden="true"></span>
+      <span class="status-copy">
+        <strong id="status-title">Agent activity</strong>
+        <span id="status-message">Email received</span>
+      </span>
+      <button class="status-dismiss" id="status-dismiss" type="button" aria-label="Dismiss status">×</button>
+      <div class="activity-progress" aria-hidden="true"><span id="activity-progress-fill"></span></div>
+      <ol class="activity-steps" id="activity-steps" aria-label="Agent activity steps"></ol>
+      <div class="activity-tool-row">
+        <span class="activity-tool-label">CURRENTLY USING</span>
+        <strong class="activity-current-tool" id="activity-current-tool">Waiting for agent</strong>
+      </div>
+    </aside>
+  </body>
+</html>
