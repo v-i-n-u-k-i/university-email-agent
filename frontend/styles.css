@@ -60,6 +60,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
 .brand-product { color: #b8ccc4; font-size: 10px; font-weight: 700; text-transform: uppercase; }
 .topbar-right { display: flex; align-items: center; gap: 25px; }
 .term-label { color: #a9c3b9; font-size: 10px; font-weight: 700; }
+.security-control { display: flex; align-items: center; gap: 8px; color: #d4e0da; cursor: pointer; }
+.security-control-caption { color: #9db6ab; font-size: 8px; font-weight: 700; }
+.security-control input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.security-switch-track { width: 34px; height: 18px; padding: 2px; display: flex; align-items: center; border: 1px solid #b5cbc0; border-radius: 12px; background: #327258; transition: background 180ms ease, border-color 180ms ease; }
+.security-switch-track span { width: 12px; height: 12px; border-radius: 50%; background: #fff; transform: translateX(15px); transition: transform 180ms ease; }
+.security-control input:not(:checked) + .security-switch-track { border-color: #e6a085; background: #a8432a; }
+.security-control input:not(:checked) + .security-switch-track span { transform: translateX(0); }
+.security-control input:focus-visible + .security-switch-track { outline: 3px solid rgb(246 198 168 / 55%); outline-offset: 3px; }
+.security-mode-label { min-width: 68px; font-size: 10px; font-weight: 700; }
+body.demo-vulnerable .security-control { color: #ffd2bd; }
+body.demo-vulnerable .security-control-caption { color: #f1b49a; }
 .student-chip { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; }
 .student-avatar {
   width: 33px;
@@ -229,6 +240,8 @@ h1, h2, p { margin-top: 0; }
 .send-button { min-height: 42px; padding: 0 16px; display: flex; align-items: center; gap: 10px; border: 0; color: #fff; background: var(--orange); font-size: 11px; font-weight: 700; transition: background 140ms ease, transform 140ms ease; }
 .send-button:disabled { opacity: .6; cursor: wait; }
 .send-symbol { font-size: 16px; }
+.agent-overlay { position: fixed; z-index: 4; inset: 0; background: rgb(42 48 45 / 42%); backdrop-filter: blur(1.5px); animation: overlay-in 180ms ease-out both; }
+.agent-overlay[hidden] { display: none; }
 .agent-status { position: fixed; z-index: 5; right: 24px; bottom: 22px; width: min(390px, calc(100vw - 32px)); padding: 15px 16px 13px; display: grid; grid-template-columns: 29px minmax(0, 1fr) 28px; align-items: center; column-gap: 11px; row-gap: 12px; border: 1px solid #cadbd0; border-top: 3px solid var(--orange); background: #fff; box-shadow: 0 18px 48px rgb(22 51 42 / 22%); animation: rise 220ms cubic-bezier(.2,.75,.25,1) both; }
 .agent-status[hidden] { display: none; }
 .status-orbit { width: 27px; height: 27px; flex: none; display: grid; place-items: center; border: 1px solid #b9d1c2; border-radius: 50%; }
@@ -262,6 +275,7 @@ h1, h2, p { margin-top: 0; }
 @keyframes reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 980px) {
   .mail-shell { width: min(100% - 26px, 900px); grid-template-columns: 178px minmax(260px, 320px) minmax(320px, 1fr); }
@@ -272,6 +286,8 @@ h1, h2, p { margin-top: 0; }
 @media (max-width: 760px) {
   .topbar { height: 66px; padding: 0 16px; }
   .term-label { display: none; }
+  .security-control-caption { display: none; }
+  .topbar-right { gap: 12px; }
   .mail-shell { width: 100%; min-height: calc(100vh - 66px); margin: 0; grid-template-columns: 1fr; overflow: visible; border: 0; box-shadow: none; }
   .folder-rail { min-height: 0; padding: 11px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 9px; border-right: 0; border-bottom: 1px solid var(--line); }
   .compose-button { height: 40px; grid-column: 1 / -1; }

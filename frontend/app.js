@@ -18,6 +18,9 @@ const state = {
 };
 
 const elements = {
+  topbar: document.querySelector('.topbar'),
+  mailShell: document.querySelector('.mail-shell'),
+  agentOverlay: document.querySelector('#agent-overlay'),
   folderTitle: document.querySelector('#folder-title'),
   listEyebrow: document.querySelector('#list-eyebrow'),
   emailList: document.querySelector('#email-list'),
@@ -43,6 +46,8 @@ const elements = {
   activitySteps: document.querySelector('#activity-steps'),
   activityCurrentTool: document.querySelector('#activity-current-tool'),
   activityProgressFill: document.querySelector('#activity-progress-fill'),
+  securityModeToggle: document.querySelector('#security-mode-toggle'),
+  securityModeLabel: document.querySelector('#security-mode-label'),
 };
 
 function escapeHtml(value) {
@@ -73,6 +78,10 @@ function formatDate(value, compact = false) {
 
 function showStatus(message, stateName = 'working', title = 'Agent activity') {
   elements.status.hidden = false;
+  elements.agentOverlay.hidden = false;
+  elements.agentOverlay.setAttribute('aria-hidden', 'false');
+  elements.topbar.inert = true;
+  elements.mailShell.inert = true;
   elements.status.classList.toggle('is-working', stateName === 'working');
   elements.status.classList.toggle('is-error', stateName === 'error');
   elements.statusTitle.textContent = title;
@@ -81,6 +90,10 @@ function showStatus(message, stateName = 'working', title = 'Agent activity') {
 
 function hideStatus() {
   elements.status.hidden = true;
+  elements.agentOverlay.hidden = true;
+  elements.agentOverlay.setAttribute('aria-hidden', 'true');
+  elements.topbar.inert = false;
+  elements.mailShell.inert = false;
   elements.status.classList.remove('is-working', 'is-error');
   state.activity = [];
   elements.activitySteps.replaceChildren();
@@ -124,6 +137,48 @@ function renderActivity(event) {
     ? (stepIndex / (ACTIVITY_STEPS.length - 1)) * 100
     : 0;
   elements.activityProgressFill.style.width = `${progress}%`;
+}
+
+function applySecurityMode(mode) {
+  const vulnerable = mode === 'vulnerable';
+  elements.securityModeToggle.checked = !vulnerable;
+  elements.securityModeLabel.textContent = vulnerable ? 'Vulnerable Demo' : 'Protected Demo';
+  document.body.classList.toggle('demo-vulnerable', vulnerable);
+  elements.securityModeToggle.setAttribute(
+    'aria-label',
+    vulnerable ? 'Disable vulnerable prompt injection demo' : 'Enable vulnerable prompt injection demo'
+  );
+}
+
+async function loadSecurityMode() {
+  try {
+    const response = await fetch('/api/security-mode');
+    if (!response.ok) throw new Error('Could not load security mode');
+    const data = await response.json();
+    applySecurityMode(data.mode);
+  } catch {
+    applySecurityMode('protected');
+  }
+}
+
+async function changeSecurityMode() {
+  const requestedMode = elements.securityModeToggle.checked ? 'protected' : 'vulnerable';
+  elements.securityModeToggle.disabled = true;
+  try {
+    const response = await fetch('/api/security-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: requestedMode }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Could not change security mode');
+    applySecurityMode(data.mode);
+  } catch (error) {
+    elements.securityModeToggle.checked = !elements.securityModeToggle.checked;
+    showStatus(error.message, 'error', 'Security mode unchanged');
+  } finally {
+    elements.securityModeToggle.disabled = false;
+  }
 }
 
 function switchView(view) {
@@ -297,5 +352,7 @@ elements.closeCompose.addEventListener('click', () => switchView('empty'));
 elements.refreshButton.addEventListener('click', () => loadFolder());
 elements.form.addEventListener('submit', sendMessage);
 elements.statusDismiss.addEventListener('click', hideStatus);
+elements.securityModeToggle.addEventListener('change', changeSecurityMode);
 
+loadSecurityMode();
 loadFolder('inbox');

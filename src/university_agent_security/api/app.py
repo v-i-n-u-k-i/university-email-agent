@@ -8,7 +8,7 @@ import threading
 import uuid
 from collections.abc import Callable
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
@@ -43,18 +43,29 @@ class StudentEmailRequest(BaseModel):
     body: str = Field(min_length=1, max_length=50_000)
 
 
+class SecurityModeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["protected", "vulnerable"]
+
+
 def create_app(
     email_tool: EmailTool | None = None,
-    agent_factory: Callable[[ToolActivityCallback], WithdrawalAgent] | None = None,
+    agent_factory: Callable[[ToolActivityCallback, bool], WithdrawalAgent]
+    | None = None,
 ) -> FastAPI:
     """Create the local app, allowing tool/model injection for tests."""
     mailbox = email_tool or EmailTool(DEFAULT_DATABASE_PATH)
     activity_queues: dict[str, queue.Queue[dict[str, object] | None]] = {}
     activity_lock = threading.Lock()
+    security_mode_lock = threading.Lock()
+    security_mode: Literal["protected", "vulnerable"] = "protected"
 
-    def create_agent(on_tool_activity: ToolActivityCallback) -> WithdrawalAgent:
+    def create_agent(
+        on_tool_activity: ToolActivityCallback, vulnerable_mode: bool
+    ) -> WithdrawalAgent:
         if agent_factory is not None:
-            return agent_factory(on_tool_activity)
+            return agent_factory(on_tool_activity, vulnerable_mode)
 
         from langchain_ollama import ChatOllama
 
@@ -67,6 +78,7 @@ def create_app(
             model=model,
             database_path=mailbox.database_path,
             on_tool_activity=on_tool_activity,
+            vulnerable_mode=vulnerable_mode,
         )
 
     def publish_activity(
@@ -84,7 +96,9 @@ def create_app(
                 {"message": message, "tool": tool, "status": status, "done": done}
             )
 
-    def process_email(job_id: str, email_id: int) -> None:
+    def process_email(
+        job_id: str, email_id: int, mode: Literal["protected", "vulnerable"]
+    ) -> None:
         status_by_operation = {
             ("Email Tool", "read_email"): "Reading email",
             ("Student Tool", "lookup_student"): "Checking student eligibility",
@@ -105,7 +119,9 @@ def create_app(
             publish_activity(job_id, message, tool_name)
 
         try:
-            create_agent(on_tool_activity).process_withdrawal_request(
+            create_agent(
+                on_tool_activity, mode == "vulnerable"
+            ).process_withdrawal_request(
                 email_id=email_id,
                 student_id=STUDENT_ID,
             )
@@ -150,6 +166,19 @@ def create_app(
     def health() -> dict[str, str]:
         return {"status": "ok", "service": "Westbridge Student Mail"}
 
+    @application.get("/api/security-mode")
+    def get_security_mode() -> dict[str, str]:
+        with security_mode_lock:
+            return {"mode": security_mode}
+
+    @application.post("/api/security-mode")
+    def set_security_mode(request: SecurityModeRequest) -> dict[str, str]:
+        nonlocal security_mode
+        with security_mode_lock:
+            security_mode = request.mode
+        LOGGER.info("security_demo_mode_changed mode=%s", request.mode)
+        return {"mode": request.mode}
+
     @application.get("/api/mailbox/inbox")
     def inbox() -> dict[str, object]:
         result = mailbox.list_student_emails(STUDENT_ID, "inbox")
@@ -185,6 +214,8 @@ def create_app(
             status_code = 404 if stored.error_code == "not_found" else 422
             raise HTTPException(status_code=status_code, detail=stored.error)
         student_email = stored.emails[0]
+        with security_mode_lock:
+            request_mode = security_mode
         job_id = uuid.uuid4().hex
         event_queue: queue.Queue[dict[str, object] | None] = queue.Queue()
         with activity_lock:
@@ -192,11 +223,15 @@ def create_app(
         publish_activity(job_id, "Email received")
         threading.Thread(
             target=process_email,
-            args=(job_id, student_email.email_id),
+            args=(job_id, student_email.email_id, request_mode),
             daemon=True,
             name=f"westbridge-agent-{job_id[:8]}",
         ).start()
-        return {"sent_email": student_email.to_dict(), "job_id": job_id}
+        return {
+            "sent_email": student_email.to_dict(),
+            "job_id": job_id,
+            "security_mode": request_mode,
+        }
 
     @application.get("/api/activity/{job_id}")
     def activity_stream(job_id: str) -> StreamingResponse:

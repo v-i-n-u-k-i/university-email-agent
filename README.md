@@ -33,6 +33,12 @@ No real email is sent. The API uses `OLLAMA_BASE_URL` and `OLLAMA_MODEL` from
 the process environment, defaulting to `http://localhost:11434` and
 `qwen2.5:7b`.
 
+The **Email Injection Defense** switch is protected by default. Turning it off
+selects **Vulnerable demo** mode for emails submitted afterward, where the
+agent is instructed to trust email-body directions. This is intentionally
+unsafe and only changes the fictional local workflow; it does not add tools or
+external access. Turn protection back on after demonstrations.
+
 Create or recreate the fictional database and its seed records from the project
 root with:
 

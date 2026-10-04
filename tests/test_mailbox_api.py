@@ -9,9 +9,12 @@ from university_agent_security.tools.email_tool import EmailTool
 
 
 class ReplyingAgent:
-    def __init__(self, email_tool: EmailTool, on_tool_activity) -> None:
+    def __init__(
+        self, email_tool: EmailTool, on_tool_activity, vulnerable_mode: bool = False
+    ) -> None:
         self.email_tool = email_tool
         self.on_tool_activity = on_tool_activity
+        self.vulnerable_mode = vulnerable_mode
         self.calls: list[tuple[int, int]] = []
 
     def process_withdrawal_request(self, email_id: int, student_id: int) -> str:
@@ -37,9 +40,9 @@ def test_local_mailbox_sends_to_agent_and_shows_reply(tmp_path: Path):
     email_tool = EmailTool(database)
     agent = None
 
-    def make_agent(on_tool_activity):
+    def make_agent(on_tool_activity, vulnerable_mode):
         nonlocal agent
-        agent = ReplyingAgent(email_tool, on_tool_activity)
+        agent = ReplyingAgent(email_tool, on_tool_activity, vulnerable_mode)
         return agent
 
     client = TestClient(create_app(email_tool, make_agent))
@@ -60,6 +63,7 @@ def test_local_mailbox_sends_to_agent_and_shows_reply(tmp_path: Path):
     sent_message = response.json()["sent_email"]
     assert sent_message["recipient"] == "fake_uni@westbridge.edu"
     assert "Kim Park" in sent_message["sender"]
+    assert response.json()["security_mode"] == "protected"
     activity = client.get(f"/api/activity/{response.json()['job_id']}")
     assert activity.status_code == 200
     for status in (
@@ -75,6 +79,7 @@ def test_local_mailbox_sends_to_agent_and_shows_reply(tmp_path: Path):
     assert '"tool": "Email Tool"' in activity.text
     assert '"tool": "Student Tool"' in activity.text
     assert agent is not None
+    assert agent.vulnerable_mode is False
     assert agent.calls == [(sent_message["email_id"], 1)]
 
     sent_folder = client.get("/api/mailbox/sent").json()["emails"]
@@ -110,9 +115,9 @@ def test_mailbox_rejects_other_recipients_without_sending(tmp_path: Path):
     email_tool = EmailTool(initialize_database(tmp_path / "university.db"))
     factory_calls = []
 
-    def make_agent(on_tool_activity):
+    def make_agent(on_tool_activity, vulnerable_mode):
         factory_calls.append(True)
-        return ReplyingAgent(email_tool, on_tool_activity)
+        return ReplyingAgent(email_tool, on_tool_activity, vulnerable_mode)
 
     client = TestClient(create_app(email_tool, make_agent))
     sent_before = client.get("/api/mailbox/sent").json()["emails"]
@@ -129,3 +134,34 @@ def test_mailbox_rejects_other_recipients_without_sending(tmp_path: Path):
     assert response.status_code == 422
     assert factory_calls == []
     assert client.get("/api/mailbox/sent").json()["emails"] == sent_before
+
+
+def test_security_mode_toggle_applies_to_subsequent_agent_job(tmp_path: Path):
+    email_tool = EmailTool(initialize_database(tmp_path / "university.db"))
+    agents = []
+
+    def make_agent(on_tool_activity, vulnerable_mode):
+        agent = ReplyingAgent(email_tool, on_tool_activity, vulnerable_mode)
+        agents.append(agent)
+        return agent
+
+    client = TestClient(create_app(email_tool, make_agent))
+    assert client.get("/api/security-mode").json() == {"mode": "protected"}
+
+    changed = client.post("/api/security-mode", json={"mode": "vulnerable"})
+    assert changed.status_code == 200
+    assert changed.json() == {"mode": "vulnerable"}
+    assert client.get("/api/security-mode").json() == {"mode": "vulnerable"}
+
+    response = client.post(
+        "/api/emails",
+        json={
+            "subject": "Mode handoff check",
+            "body": "A normal fictional request.",
+        },
+    )
+    assert response.status_code == 202
+    assert response.json()["security_mode"] == "vulnerable"
+    client.get(f"/api/activity/{response.json()['job_id']}")
+    assert len(agents) == 1
+    assert agents[0].vulnerable_mode is True

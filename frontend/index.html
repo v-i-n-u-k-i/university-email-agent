@@ -18,7 +18,13 @@
         </span>
       </a>
       <div class="topbar-right">
-        <span class="term-label">AUTUMN TERM · 2026</span>
+        <label class="security-control" for="security-mode-toggle" title="Protected mode ignores instructions embedded in email content">
+          <span class="security-control-caption">EMAIL INJECTION DEFENSE</span>
+          <input id="security-mode-toggle" type="checkbox" role="switch" checked aria-label="Email injection defense">
+          <span class="security-switch-track" aria-hidden="true"><span></span></span>
+          <span class="security-mode-label" id="security-mode-label">Protected Demo</span>
+        </label>
+        <span class="term-label">SPRING TERM · 2026</span>
         <span class="student-chip"><span class="student-avatar">KP</span> Kim Park</span>
       </div>
     </header>
@@ -106,6 +112,7 @@
       </section>
     </main>
 
+    <div class="agent-overlay" id="agent-overlay" aria-hidden="true" hidden></div>
     <aside class="agent-status" id="agent-status" role="status" aria-live="polite" hidden>
       <span class="status-orbit" id="status-orbit" aria-hidden="true"></span>
       <span class="status-copy">
