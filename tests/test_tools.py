@@ -110,6 +110,27 @@ def test_email_tool_rejects_invalid_inputs(database_path: Path):
     )
 
 
+def test_email_tool_normalizes_display_name_recipient(database_path: Path):
+    tool = EmailTool(database_path)
+
+    result = tool.send_email(
+        "Kim Park <kim.park@students.westbridge.example>",
+        "Withdrawal update",
+        "Your request was referred for review.",
+    )
+
+    assert result.success
+    assert result.emails[0].recipient == "kim.park@students.westbridge.example"
+    assert (
+        tool.send_email(
+            "Kim <kim.park@students.westbridge.example>, other@example.org",
+            "Subject",
+            "Body",
+        ).error_code
+        == "invalid_input"
+    )
+
+
 def test_student_tool_valid_operations_and_invalid_student_ids(database_path: Path):
     tool = StudentTool(database_path)
 

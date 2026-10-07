@@ -6,6 +6,7 @@ import sqlite3
 from contextlib import closing
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from email.utils import getaddresses
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
@@ -118,10 +119,13 @@ class EmailTool:
             return self._failure(
                 action, "invalid_input", "query must be a non-empty string"
             )
-        if recipient is not None and not self._valid_email(recipient):
-            return self._failure(
-                action, "invalid_input", "recipient must be a valid email address"
-            )
+        normalized_recipient = None
+        if recipient is not None:
+            normalized_recipient = self._normalize_email(recipient)
+            if normalized_recipient is None:
+                return self._failure(
+                    action, "invalid_input", "recipient must be a valid email address"
+                )
         if (
             isinstance(limit, bool)
             or not isinstance(limit, int)
@@ -145,7 +149,7 @@ class EmailTool:
         parameters: list[object] = [pattern, pattern, pattern, pattern]
         if recipient is not None:
             sql += " AND lower(recipient) = lower(?)"
-            parameters.append(recipient.strip())
+            parameters.append(normalized_recipient)
         sql += " ORDER BY timestamp DESC, email_id DESC LIMIT ?"
         parameters.append(limit)
 
@@ -163,7 +167,8 @@ class EmailTool:
         """Store a new unread email from the local agent sender."""
         action = "send_email"
         LOGGER.info("email_tool.%s invoked", action)
-        if not self._valid_email(recipient):
+        normalized_recipient = self._normalize_email(recipient)
+        if normalized_recipient is None:
             return self._failure(
                 action, "invalid_input", "recipient must be a valid email address"
             )
@@ -194,7 +199,7 @@ class EmailTool:
                     "VALUES (?, ?, ?, ?, ?, 'unread')",
                     (
                         DEFAULT_SENDER,
-                        recipient.strip(),
+                        normalized_recipient,
                         subject.strip(),
                         body.strip(),
                         timestamp,
@@ -391,8 +396,20 @@ class EmailTool:
         return connection
 
     @staticmethod
-    def _valid_email(value: object) -> bool:
-        return isinstance(value, str) and bool(EMAIL_PATTERN.fullmatch(value.strip()))
+    def _normalize_email(value: object) -> str | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+        addresses = getaddresses([value.strip()])
+        if len(addresses) != 1:
+            return None
+        address = addresses[0][1].strip()
+        if not EMAIL_PATTERN.fullmatch(address):
+            return None
+        return address
+
+    @classmethod
+    def _valid_email(cls, value: object) -> bool:
+        return cls._normalize_email(value) is not None
 
     @staticmethod
     def _record(row: sqlite3.Row) -> EmailRecord:

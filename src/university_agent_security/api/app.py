@@ -32,7 +32,12 @@ FRONTEND_DIRECTORY = Path(__file__).resolve().parents[3] / "frontend"
 
 
 class WithdrawalAgent(Protocol):
-    def process_withdrawal_request(self, email_id: int, student_id: int) -> str: ...
+    def process_withdrawal_request(
+        self,
+        email_id: int,
+        student_id: int,
+        email_body_addendum: str | None = None,
+    ) -> str: ...
 
 
 class StudentEmailRequest(BaseModel):
@@ -41,6 +46,7 @@ class StudentEmailRequest(BaseModel):
     recipient: str = Field(default=STUDENT_INBOX_ADDRESS, max_length=254)
     subject: str = Field(min_length=1, max_length=998)
     body: str = Field(min_length=1, max_length=50_000)
+    injection_text: str | None = Field(default=None, max_length=10_000)
 
 
 class SecurityModeRequest(BaseModel):
@@ -97,7 +103,10 @@ def create_app(
             )
 
     def process_email(
-        job_id: str, email_id: int, mode: Literal["protected", "vulnerable"]
+        job_id: str,
+        email_id: int,
+        mode: Literal["protected", "vulnerable"],
+        injection_text: str | None,
     ) -> None:
         status_by_operation = {
             ("Email Tool", "read_email"): "Reading email",
@@ -124,6 +133,7 @@ def create_app(
             ).process_withdrawal_request(
                 email_id=email_id,
                 student_id=STUDENT_ID,
+                email_body_addendum=injection_text,
             )
             inbox_result = mailbox.list_student_emails(STUDENT_ID, "inbox")
             reply_was_saved = inbox_result.success and any(
@@ -214,6 +224,11 @@ def create_app(
             status_code = 404 if stored.error_code == "not_found" else 422
             raise HTTPException(status_code=status_code, detail=stored.error)
         student_email = stored.emails[0]
+        injection_text = (
+            request.injection_text.strip()
+            if request.injection_text and request.injection_text.strip()
+            else None
+        )
         with security_mode_lock:
             request_mode = security_mode
         job_id = uuid.uuid4().hex
@@ -223,7 +238,7 @@ def create_app(
         publish_activity(job_id, "Email received")
         threading.Thread(
             target=process_email,
-            args=(job_id, student_email.email_id, request_mode),
+            args=(job_id, student_email.email_id, request_mode, injection_text),
             daemon=True,
             name=f"westbridge-agent-{job_id[:8]}",
         ).start()

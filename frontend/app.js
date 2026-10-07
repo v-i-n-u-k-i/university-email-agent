@@ -15,6 +15,7 @@ const state = {
   selectedId: null,
   busy: false,
   activity: [],
+  injectionText: '',
 };
 
 const elements = {
@@ -48,6 +49,7 @@ const elements = {
   activityProgressFill: document.querySelector('#activity-progress-fill'),
   securityModeToggle: document.querySelector('#security-mode-toggle'),
   securityModeLabel: document.querySelector('#security-mode-label'),
+  injectionText: document.querySelector('#injection-text'),
 };
 
 function escapeHtml(value) {
@@ -271,8 +273,7 @@ function showCompose() {
   elements.subject.focus();
 }
 
-async function sendMessage(event) {
-  event.preventDefault();
+async function sendMessage() {
   if (state.busy) return;
   state.busy = true;
   elements.sendButton.disabled = true;
@@ -287,10 +288,12 @@ async function sendMessage(event) {
         recipient: UNIVERSITY_ADDRESS,
         subject: elements.subject.value,
         body: elements.body.value,
+        injection_text: state.injectionText || null,
       }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || 'Message could not be sent.');
+    state.injectionText = '';
     elements.form.reset();
     document.querySelector('#recipient').value = UNIVERSITY_ADDRESS;
     const activity = new EventSource(`/api/activity/${encodeURIComponent(data.job_id)}`);
@@ -350,7 +353,16 @@ elements.composeButton.addEventListener('click', showCompose);
 elements.emptyCompose.addEventListener('click', showCompose);
 elements.closeCompose.addEventListener('click', () => switchView('empty'));
 elements.refreshButton.addEventListener('click', () => loadFolder());
-elements.form.addEventListener('submit', sendMessage);
+elements.form.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  if (state.busy) return;
+
+  state.injectionText = elements.injectionText.value.trim();
+
+  sendMessage();
+});
+
 elements.statusDismiss.addEventListener('click', hideStatus);
 elements.securityModeToggle.addEventListener('change', changeSecurityMode);
 

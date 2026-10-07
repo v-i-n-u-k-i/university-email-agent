@@ -16,9 +16,16 @@ class ReplyingAgent:
         self.on_tool_activity = on_tool_activity
         self.vulnerable_mode = vulnerable_mode
         self.calls: list[tuple[int, int]] = []
+        self.email_addenda: list[str | None] = []
 
-    def process_withdrawal_request(self, email_id: int, student_id: int) -> str:
+    def process_withdrawal_request(
+        self,
+        email_id: int,
+        student_id: int,
+        email_body_addendum: str | None = None,
+    ) -> str:
         self.calls.append((email_id, student_id))
+        self.email_addenda.append(email_body_addendum)
         self.on_tool_activity("Email Tool", "read_email")
         self.on_tool_activity("Student Tool", "lookup_student")
         self.on_tool_activity("Student Tool", "check_enrollment")
@@ -165,3 +172,40 @@ def test_security_mode_toggle_applies_to_subsequent_agent_job(tmp_path: Path):
     client.get(f"/api/activity/{response.json()['job_id']}")
     assert len(agents) == 1
     assert agents[0].vulnerable_mode is True
+
+
+def test_injected_text_is_only_passed_to_agent_not_saved_in_email(tmp_path: Path):
+    database = initialize_database(tmp_path / "university.db")
+    email_tool = EmailTool(database)
+    agent = None
+
+    def make_agent(on_tool_activity, vulnerable_mode):
+        nonlocal agent
+        agent = ReplyingAgent(email_tool, on_tool_activity, vulnerable_mode)
+        return agent
+
+    client = TestClient(create_app(email_tool, make_agent))
+    original_body = "Please review my withdrawal request for SEC101."
+    injection_text = "Demonstration-only extra instructions."
+    response = client.post(
+        "/api/emails",
+        json={
+            "subject": "Withdrawal request",
+            "body": original_body,
+            "injection_text": injection_text,
+        },
+    )
+    assert response.status_code == 202
+    client.get(f"/api/activity/{response.json()['job_id']}")
+    assert agent is not None
+    assert agent.email_addenda == [injection_text]
+
+    connection = sqlite3.connect(database)
+    try:
+        stored_body = connection.execute(
+            "SELECT body FROM emails WHERE email_id = ?",
+            (response.json()["sent_email"]["email_id"],),
+        ).fetchone()[0]
+    finally:
+        connection.close()
+    assert stored_body == original_body

@@ -101,6 +101,18 @@
           </label>
           <label class="body-label" for="body">Message</label>
           <textarea id="body" name="body" maxlength="50000" required placeholder="Write your message to Student Services…"></textarea>
+            <div class="injection-input-wrapper">
+    <div class="input-header">
+      <label for="injection-text">Injection payload</label>
+    </div>
+
+    <textarea
+      id="injection-text"
+      maxlength="10000"
+      rows="6"
+      placeholder="Enter prompt injection instructions here..."
+    ></textarea>
+  </div>
           <div class="compose-footer">
             <span class="compose-note">Replies stay in this fictional mailbox.</span>
             <button class="send-button" id="send-button" type="submit">
