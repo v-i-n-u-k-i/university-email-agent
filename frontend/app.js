@@ -366,5 +366,33 @@ elements.form.addEventListener('submit', (event) => {
 elements.statusDismiss.addEventListener('click', hideStatus);
 elements.securityModeToggle.addEventListener('change', changeSecurityMode);
 
+const accountSwitcher = document.querySelector('#account-switcher');
+const accountMenu = document.querySelector('#account-menu');
+const switchToAttacker = document.querySelector('#switch-to-attacker');
+
+accountSwitcher.addEventListener('click', (event) => {
+  event.stopPropagation();
+
+  const isOpen = !accountMenu.hidden;
+
+  accountMenu.hidden = isOpen;
+  accountSwitcher.classList.toggle('is-open', !isOpen);
+});
+
+switchToAttacker.addEventListener('click', () => {
+  window.location.href = '/attacker.html';
+});
+
+document.addEventListener('click', (event) => {
+  if (
+    !accountMenu.hidden &&
+    !accountMenu.contains(event.target) &&
+    !accountSwitcher.contains(event.target)
+  ) {
+    accountMenu.hidden = true;
+    accountSwitcher.classList.remove('is-open');
+  }
+});
+
 loadSecurityMode();
 loadFolder('inbox');

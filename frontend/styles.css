@@ -58,7 +58,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
 .brand-copy { display: flex; flex-direction: column; gap: 2px; }
 .brand-name { font: 20px Georgia, serif; }
 .brand-product { color: #b8ccc4; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-.topbar-right { display: flex; align-items: center; gap: 25px; }
+.topbar-right { display: flex; align-items: center; gap: 25px; position: relative; }
 .term-label { color: #a9c3b9; font-size: 10px; font-weight: 700; }
 .security-control { display: flex; align-items: center; gap: 8px; color: #d4e0da; cursor: pointer; }
 .security-control-caption { color: #9db6ab; font-size: 8px; font-weight: 700; }
@@ -82,6 +82,148 @@ body.demo-vulnerable .security-control-caption { color: #f1b49a; }
   background: #f1c3a8;
   font-size: 11px;
   font-weight: 700;
+}
+/* ================================
+   ACCOUNT SWITCHER
+   ================================ */
+
+.account-switcher {
+  cursor: pointer;
+  border: 0;
+  font: inherit;
+  background: transparent;
+  color: #ffffff;
+}
+
+.account-chevron {
+  margin-left: 4px;
+  font-size: 13px;
+  opacity: 0.55;
+  transition: transform 160ms ease;
+}
+
+.account-switcher.is-open .account-chevron {
+  transform: rotate(180deg);
+}
+
+.account-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 100;
+
+  width: 245px;
+  padding: 8px;
+
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+
+  box-shadow: 0 14px 36px rgb(25 53 46 / 15%);
+
+  animation: account-menu-in 150ms ease-out both;
+}
+
+@keyframes account-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-menu-label {
+  padding: 8px 10px 7px;
+
+  color: #8a9690;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.account-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+  color: var(--ink);
+
+  text-align: left;
+  cursor: pointer;
+
+  transition:
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.account-option:hover {
+  background: var(--wash);
+}
+
+.account-option:active {
+  transform: scale(0.99);
+}
+
+.account-option.is-active {
+  background: #f1f5f2;
+}
+
+.account-option-avatar {
+  width: 32px;
+  height: 32px;
+
+  flex: 0 0 32px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 9px;
+
+  background: #dce9e4;
+  color: var(--forest);
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.account-option-avatar.attacker-avatar {
+  background: #eee3e0;
+  color: #8c4035;
+}
+
+.account-option-copy {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account-option-copy strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.account-option-copy small {
+  color: #8a9690;
+  font-size: 10px;
+}
+
+.account-check {
+  color: var(--forest);
+  font-size: 13px;
 }
 
 .mail-shell {

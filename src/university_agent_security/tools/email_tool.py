@@ -386,6 +386,44 @@ class EmailTool:
                 action, "database_error", "The local email database is unavailable"
             )
 
+    def list_emails_by_recipient(
+        self, recipient: str, limit: int = MAX_SEARCH_RESULTS
+    ) -> EmailToolResult:
+        """List all messages sent to one recipient address."""
+        action = "list_emails_by_recipient"
+
+        normalized_recipient = self._normalize_email(recipient)
+        if normalized_recipient is None:
+            return self._failure(
+                action,
+                "invalid_input",
+                "recipient must be a valid email address",
+            )
+
+        try:
+            with closing(self._connect()) as connection:
+                rows = connection.execute(
+                    "SELECT email_id, sender, recipient, subject, body, timestamp, read_status "
+                    "FROM emails "
+                    "WHERE lower(recipient) = lower(?) "
+                    "ORDER BY timestamp DESC, email_id DESC "
+                    "LIMIT ?",
+                    (normalized_recipient, limit),
+                ).fetchall()
+
+            return self._success(
+                action,
+                tuple(self._record(row) for row in rows),
+            )
+
+        except sqlite3.Error:
+            LOGGER.exception("email_tool.%s encountered a database error", action)
+            return self._failure(
+                action,
+                "database_error",
+                "The local email database is unavailable",
+            )
+
     def _connect(self) -> sqlite3.Connection:
         if not self.database_path.is_file():
             raise sqlite3.OperationalError("database file does not exist")

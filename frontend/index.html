@@ -25,7 +25,31 @@
           <span class="security-mode-label" id="security-mode-label">Protected Demo</span>
         </label>
         <span class="term-label">SPRING TERM · 2026</span>
-        <span class="student-chip"><span class="student-avatar">KP</span> Kim Park</span>
+        <button class="student-chip account-switcher" id="account-switcher" type="button" aria-label="Switch account">
+          <span class="student-avatar">KP</span>
+          <span>Kim Park</span>
+          <span class="account-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="account-menu" id="account-menu" hidden>
+          <div class="account-menu-label">SWITCH ACCOUNT</div>
+
+          <button class="account-option is-active" type="button">
+            <span class="account-option-avatar">KP</span>
+            <span class="account-option-copy">
+              <strong>Kim Park</strong>
+              <small>Student account</small>
+            </span>
+            <span class="account-check">✓</span>
+          </button>
+
+          <button class="account-option" id="switch-to-attacker" type="button">
+            <span class="account-option-avatar attacker-avatar">A</span>
+            <span class="account-option-copy">
+              <strong>Attacker</strong>
+              <small>External account</small>
+            </span>
+          </button>
+        </div>
       </div>
     </header>
 

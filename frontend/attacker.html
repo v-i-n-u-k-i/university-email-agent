@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17191c">
+    <title>Mail Client</title>
+    <link rel="stylesheet" href="/attacker.css">
+    <script src="/attacker.js" defer></script>
+  </head>
+
+  <body class="attacker-page">
+
+    <header class="attacker-topbar">
+      <div class="attacker-brand">
+        <span class="attacker-brand-mark">A</span>
+
+        <div>
+          <span class="attacker-brand-name">Mail Client</span>
+          <span class="attacker-brand-product">External Account</span>
+        </div>
+      </div>
+
+      <div class="attacker-topbar-right">
+
+        <span class="attacker-status">
+          <span class="attacker-status-dot"></span>
+          EXTERNAL
+        </span>
+
+        <button
+          class="attacker-account"
+          id="attacker-account"
+          type="button"
+          aria-label="Switch account"
+        >
+          <span class="attacker-account-avatar">A</span>
+          <span>Attacker</span>
+          <span class="attacker-chevron">⌄</span>
+        </button>
+
+        <div class="attacker-account-menu" id="attacker-account-menu" hidden>
+          <div class="attacker-menu-label">SWITCH ACCOUNT</div>
+
+          <button class="attacker-account-option is-active" type="button">
+            <span class="attacker-option-avatar">A</span>
+
+            <span>
+              <strong>Attacker</strong>
+              <small>External account</small>
+            </span>
+
+            <span>✓</span>
+          </button>
+
+          <button
+            class="attacker-account-option"
+            id="switch-to-kim"
+            type="button"
+          >
+            <span class="attacker-option-avatar kim-avatar">KP</span>
+
+            <span>
+              <strong>Kim Park</strong>
+              <small>Student account</small>
+            </span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+
+    <main class="attacker-mail-shell">
+
+      <aside class="attacker-folder-rail">
+
+        <div class="attacker-rail-title">
+          MAILBOX
+        </div>
+
+        <nav>
+          <button class="attacker-folder is-active" type="button">
+            <span class="attacker-folder-icon"></span>
+            <span>Inbox</span>
+          </button>
+
+          <button class="attacker-folder" type="button">
+            <span class="attacker-folder-icon sent"></span>
+            <span>Sent</span>
+          </button>
+        </nav>
+
+        <div class="attacker-rail-bottom">
+          <span class="attacker-connection-dot"></span>
+          External mailbox
+        </div>
+
+      </aside>
+
+
+      <section class="attacker-message-column">
+
+        <div class="attacker-list-heading">
+          <div>
+            <p class="attacker-eyebrow">EXTERNAL MAILBOX</p>
+            <h1>Inbox</h1>
+          </div>
+
+          <button
+            class="attacker-refresh"
+            type="button"
+            aria-label="Refresh mailbox"
+          >
+            ↻
+          </button>
+        </div>
+
+        <div class="attacker-email-list" id="attacker-email-list"></div>
+
+            <div class="attacker-empty-list" id="attacker-empty-list" hidden>
+            <strong>No messages here</strong>
+            <span>This mailbox is waiting for mail.</span>
+            </div>
+
+      </section>
+
+
+      <section class="attacker-reading-column">
+
+  <div class="attacker-reader-empty" id="attacker-reader-empty">
+    <div class="attacker-reader-symbol">
+      A
+    </div>
+
+    <p class="attacker-eyebrow">
+      EXTERNAL ACCOUNT
+    </p>
+
+    <h2>
+      Attacker mailbox
+    </h2>
+
+    <p>
+      Messages sent to this account appear here.
+    </p>
+  </div>
+
+  <article class="attacker-email-reader" id="attacker-email-reader" hidden>
+  </article>
+
+</section>
+
+    </main>
+
+  </body>
+</html>

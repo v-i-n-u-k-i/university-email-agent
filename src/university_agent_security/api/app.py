@@ -29,6 +29,7 @@ from university_agent_security.tools.email_tool import (
 LOGGER = logging.getLogger(__name__)
 STUDENT_ID = 1
 FRONTEND_DIRECTORY = Path(__file__).resolve().parents[3] / "frontend"
+ATTACKER_EMAIL_ADDRESS = "attacker@cybercorp.com"
 
 
 class WithdrawalAgent(Protocol):
@@ -210,6 +211,18 @@ def create_app(
             status_code = 404 if result.error_code == "not_found" else 422
             raise HTTPException(status_code=status_code, detail=result.error)
         return {"email": result.emails[0].to_dict()}
+
+    @application.get("/api/mailbox/attacker")
+    def attacker_inbox() -> dict[str, object]:
+        result = mailbox.list_emails_by_recipient(ATTACKER_EMAIL_ADDRESS)
+
+        if not result.success:
+            raise HTTPException(
+                status_code=500,
+                detail=result.error or "Could not load attacker mailbox",
+            )
+
+        return {"emails": [email.to_dict() for email in result.emails]}
 
     @application.post("/api/emails", status_code=202)
     def send_email(request: StudentEmailRequest) -> dict[str, object]:
